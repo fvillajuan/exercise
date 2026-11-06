@@ -1,10 +1,10 @@
-package com.example.authorization.controller;
+package com.demo.exercise.api;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-public class LoginController {
+public class LoginControleur {
 
     @GetMapping("/login")
     public String login() {

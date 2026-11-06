@@ -1,10 +1,10 @@
-package com.example.authorization;
+package com.demo.exercise;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AuthorizationApplicationTests {
+class ExerciseApplicationTests {
 
 	@Test
 	void contextLoads() {
