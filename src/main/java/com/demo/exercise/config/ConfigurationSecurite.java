@@ -19,12 +19,14 @@ import org.springframework.security.config.annotation.web.configuration.OAuth2Au
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
+import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -64,7 +66,7 @@ public class ConfigurationSecurite {
 
     @Bean
     public JdbcRegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
-        RegisteredClient messagingClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("messaging-client")
                 .clientSecret("{noop}secret")
                 // Soumettre les coordonnées client id/client secret dans le corps de la requête
@@ -75,8 +77,20 @@ public class ConfigurationSecurite {
                 .scope("allo.droit")
                 .build();
 
+        RegisteredClient registeredClientAlg = RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId("messaging-client2")
+                .clientSecret("mon-secret-local-exercise-1234-ok")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .scope("allo.droit")
+                .clientSettings(ClientSettings.builder()
+                        .tokenEndpointAuthenticationSigningAlgorithm(MacAlgorithm.HS256)
+                        .build())
+                .build();
+
         JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-        registeredClientRepository.save(messagingClient);
+        registeredClientRepository.save(registeredClient);
+        registeredClientRepository.save(registeredClientAlg);
 
         return registeredClientRepository;
     }
