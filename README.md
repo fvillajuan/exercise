@@ -10,7 +10,6 @@ Le projet simule un serveur d'authentification / d'autorisation utilisé par une
 ## Prérequis
 
 - Java 21
-- Gradle (ou le wrapper `gradlew` inclus dans le projet)
 - Un navigateur ou un outil HTTP comme `curl`
 
 ## Démarrage
@@ -42,19 +41,28 @@ http://localhost:9000/oauth2/token
 
 ### Paramètres requis
 
-En mode `client_credentials`, le client s'authentifie avec Basic Auth :
+Dans la configuration actuelle, le client principal est `messaging-client` et il accepte les deux modes d'authentification suivants :
 
-- username : `messaging-client`
-- password : `secret`
+- `client_secret_basic` via l'en-tête HTTP `Authorization`
+- `client_secret_post` via le corps de la requête
 
-Et la requête contient aussi :
+Un second client est aussi présent pour la méthode `client_secret_jwt` :
 
-```text
-grant_type=client_credentials
-scope=allo.droit
+- `client_id` : `messaging-client2`
+- `client_secret` : `mon-secret-local-exercise-1234-ok`
+- algorithme de signature : `HS256`
+
+Dans ce mode, le `client_secret` n'est pas envoyé directement dans le corps de la requête. Il est intégré dans un JWT que le client signe lui-même avec ce secret, puis envoie dans le paramètre `client_assertion`. Le serveur OAuth vérifie la signature du JWT pour confirmer l'identité du client.
+
+### Exemple avec curl (client_secret_jwt)
+
+```bash
+curl -X POST "http://localhost:9000/oauth2/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&scope=allo.droit&client_id=messaging-client2&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=<jwt_assertion>"
 ```
 
-### Exemple avec curl
+### Exemple avec curl (Basic Auth)
 
 Comme le client OAuth2 est authentifié en Basic Auth, il faut envoyer le `username` et le `password` dans l'en-tête HTTP d'authentification.
 
@@ -66,6 +74,14 @@ curl -X POST "http://localhost:9000/oauth2/token" \
 ```
 
 Le `client_id` et le `client_secret` ne sont pas envoyés dans le corps de la requête lorsqu'on utilise la Basic Auth ; ils sont fournis via `-u`.
+
+### Exemple avec curl (client_secret_post)
+
+```bash
+curl -X POST "http://localhost:9000/oauth2/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&scope=allo.droit&client_id=messaging-client&client_secret=secret"
+```
 
 ### Exemple de réponse
 
@@ -80,32 +96,19 @@ Le `client_id` et le `client_secret` ne sont pas envoyés dans le corps de la re
 
 Le champ `access_token` contient le JWT signé que votre client pourra ensuite transmettre dans l'en-tête `Authorization`.
 
-## Scopes disponibles
+## Clients enregistrés
 
-Le client configuré pour l'exercice possède les scopes suivants :
+La configuration actuelle enregistre deux clients OAuth2 :
 
-- `allo.droit`
-- `openid`
-- `profile`
+- `messaging-client`
+  - secret : `secret`
+  - méthodes d'authentification : `client_secret_basic`, `client_secret_post`
+  - grant type : `client_credentials`
+  - scope : `allo.droit`
 
-## Points importants
-
-- Le client OAuth2 est configuré avec l'identifiant `messaging-client`.
-- Le secret attendu est `secret`.
-- L'authorization server utilise le mode `client_credentials` pour l'émission de jetons dans ce cas d'usage.
-- Les tokens sont signés et peuvent être décodés en inspectant le payload JWT.
-
-## Dépannage
-
-### Le serveur ne démarre pas
-
-Vérifier que Java 21 est bien installé et que le projet n'est pas déjà en cours d'exécution sur les ports `9000` ou `9443`.
-
-### La requête OAuth2 échoue
-
-Vérifier que :
-
-- le `client_id` est exactement `messaging-client`
-- le `client_secret` est exactement `secret`
-- le `grant_type` est bien `client_credentials`
-- le `scope` est bien renseigné et conforme aux scopes configurés
+- `messaging-client2`
+  - secret : `mon-secret-local-exercise-1234-ok`
+  - méthode d'authentification : `client_secret_jwt`
+  - algorithme de signature : `HS256`
+  - grant type : `client_credentials`
+  - scope : `allo.droit`
