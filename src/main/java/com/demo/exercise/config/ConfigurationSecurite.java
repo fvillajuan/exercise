@@ -16,7 +16,6 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -25,7 +24,6 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -38,22 +36,8 @@ public class ConfigurationSecurite {
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(
-            HttpSecurity http, AuthorizationServerSettings authorizationServerSettings) {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) {
         http.oauth2AuthorizationServer(Customizer.withDefaults());
-
-        ClientAuthenticationConverter clientAuthenticationConverter =
-                new ClientAuthenticationConverter(
-                        authorizationServerSettings.getDeviceAuthorizationEndpoint());
-
-        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                .deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
-                        deviceAuthorizationEndpoint.verificationUri("/activate")
-                )
-                .clientAuthentication(clientAuthentication ->
-                        clientAuthentication
-                                .authenticationConverter(clientAuthenticationConverter)
-                );
 
         http.exceptionHandling(
                 exceptions -> exceptions.defaultAuthenticationEntryPointFor(
